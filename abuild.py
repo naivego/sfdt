@@ -366,9 +366,9 @@ def laod_DomDatas(  ):
     ABD_Config = {}
     ABD_Config['Rt_Dir'] = os.getcwd()
     ABD_Config['DB_Rt_Dir'] = r'D:\ArcticFox\project\hdf5_database'.replace('\\', '/')
-    ABD_Config['Time_Param'] = ['2016_01_01', '2017_06_30']
+    ABD_Config['Time_Param'] = ['2010_01_01', '2017_06_30']
     ABD_Config['Group_Name'] = 'rst'
-    ABD_Config['Period_List'] = ['H']
+    ABD_Config['Period_List'] = ['M5']
     ABD_Config['First_Freq_Col_Param'] = ['Open', 'High', 'Low', 'Close', 'Volume','Oi','AdjFactor']
     ABD_Config['Other_Freq_Col_Param'] = ['Close']
 
@@ -380,8 +380,8 @@ def laod_DomDatas(  ):
     Var_List_all = ['Y', 'FU', 'BB', 'ZN', 'JR', 'WH', 'BU', 'FB', 'WR', 'FG', 'JD', 'HC', 'L', 'NI',
                     'PP', 'RS', 'PB', 'LR', 'TF', 'RM', 'RI', 'PM', 'A', 'C', 'B', 'AG', 'RU', 'I', 'J',
                     'M', 'AL', 'CF', 'IH', 'AU', 'T', 'V', 'CS', 'IC', 'CU', 'IF', 'MA', 'OI', 'JM', 'SR', 'SF',
-                    'SN', 'SM', 'RB','TA', 'P', 'ZC']  # 'WT', 'WS', 'TC','ER',,'ME','RO',
-    subvars = ['RB'] #Var_List_all
+                    'SN', 'SM','RB','TA', 'P', 'ZC']  # 'WT', 'WS', 'TC','ER',,'ME','RO',
+    subvars = ['I', 'J','CU', 'IF','IC', 'IH', 'RB', 'TA',] #Var_List_all
 
     for i in range(0,len(subvars),5):
 
@@ -396,7 +396,7 @@ def laod_DomDatas(  ):
             ABD.apply_adj_factor()
 
         # 因子存放目录
-        dir1 = 'D:/lab/Dom/'
+        dir1 = 'D:/lab/zhcun/'
         period = ABD_Config['Period_List'][0] # 'Grst' # 'Qrst'  # 'Grst'
         # 创建目录
         factordir = dir1 + period + '/'
@@ -435,7 +435,7 @@ def laod_DomDatas(  ):
                 skdata['prehh'] = skdata['crthh'].shift(1)
                 skdata = skdata[~((skdata['prehh'] == u'15') & (skdata['high'] - skdata['low'] < 0.01) \
                                   & ((skdata['hms'] == u'21:00:00') | (skdata['hms'] == u'09:00:00') | (skdata['hms'] == u'09:30:00')))]
-
+                skdata.drop(['hms', 'crthh', 'prehh'], axis=1, inplace=True)
             skdata.to_csv(factordir + var + '_' + period + '.csv')
 
 
@@ -745,8 +745,8 @@ def showrel_Grst_Factor(  ):
 
 
 if __name__ == '__main__':
-    # laod_DomDatas()
-    btest_Grst_Factor()
+    laod_DomDatas()
+    # btest_Grst_Factor()
     # pro_Grst_Factor()
     # showrel_Grst_Factor()
 
