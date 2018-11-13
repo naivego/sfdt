@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.pylab import date2num
 
@@ -52,7 +52,7 @@ def plotsdk(stkdf, disfactors=[], Symbol='symbol', Period =''):
     # fig, (ax, ax1) = plt.subplots(2, sharex=True, figsize=(12, 5))
     fig, ax = plt.subplots(1, sharex=True, figsize=(12, 5))
     #fig, ax = plt.subplots()
-    fig.subplots_adjust(bottom=0.2, left=0.05)
+    fig.subplots_adjust(bottom=0.05, left=0.03)
     def mydate(x, pos):
         try:
             return xdate[int(x)]
@@ -571,7 +571,7 @@ def btest_Grst_Factor( datain = 'mongo' ):
                     'PP', 'PB', 'RB', 'TF', 'RM', 'PM', 'A', 'C', 'B', 'AG', 'RU', 'I', 'J',
                     'M', 'AL', 'CF', 'V', 'CS', 'MA', 'OI', 'JM', 'SR', 'TA', 'P'] #
 
-    Var_List_pat =['RB']# 'JD', 'CU', 'I',  'FG',  'IF'] #'CU', 'I',  'FG', 'RB', 'IF', ]
+    Var_List_pat =['RB']# ['J','IF','IC','IH','TA','RB','I','CU']
 
     Var_List =  Var_List_pat
 
@@ -771,8 +771,8 @@ def showrel_Grst_Factor(  ):
 
 
 if __name__ == '__main__':
-    laod_DomDatas()
-    # btest_Grst_Factor()
+    # laod_DomDatas()
+    btest_Grst_Factor(datain = 'mongo')
     # pro_Grst_Factor()
     # showrel_Grst_Factor()
 
