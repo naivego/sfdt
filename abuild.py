@@ -7,8 +7,12 @@ Created on Thu Oct 26 14:42:03 2017
 
 
 from __future__ import division
+
 import pandas as pd
 import numpy as np
+
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.pylab import date2num
 
@@ -16,7 +20,7 @@ import matplotlib.finance as mpf
 from matplotlib.dates import DateFormatter, WeekdayLocator, DayLocator, MONDAY
 from matplotlib.finance import candlestick2_ohlc
 import matplotlib.ticker as ticker
-from pymongo import MongoClient
+import pymongo
 from pymongo.errors import ConnectionFailure
 import re
 import imp
@@ -45,8 +49,8 @@ def plotsdk(stkdf, disfactors=[], Symbol='symbol', Period =''):
     # quotes['mid'] = 0
     xdate = [itime for itime in quotes['time']]
 
-    # fig, (ax, ax1) = plt.subplots(2, sharex=True, figsize=(20, 10))
-    fig, ax = plt.subplots(1, sharex=True, figsize=(20,8))
+    # fig, (ax, ax1) = plt.subplots(2, sharex=True, figsize=(12, 5))
+    fig, ax = plt.subplots(1, sharex=True, figsize=(12, 5))
     #fig, ax = plt.subplots()
     fig.subplots_adjust(bottom=0.2, left=0.05)
     def mydate(x, pos):
@@ -439,50 +443,68 @@ def laod_DomDatas(  ):
             skdata.to_csv(factordir + var + '_' + period + '.csv')
 
 
-def laod_Dombar( Var, Period, Time_Param, DB_Rt_Dir):
-    ABD_Config = {}
-    ABD_Config['DB_Rt_Dir'] = DB_Rt_Dir
-    ABD_Config['Time_Param'] = Time_Param
-    ABD_Config['Period_List'] = [Period]
-    ABD_Config['First_Freq_Col_Param'] = ['Open', 'High', 'Low', 'Close', 'Volume','Oi','AdjFactor']
-    ABD_Config['Other_Freq_Col_Param'] = ['Close']
+def laod_Dombar( Var, Period, Time_Param, datain = 'mongo', host = 'localhost', DB_Rt_Dir=''):
+    if datain == 'mongo':
+        print 'Load bar from mongodb: ' + Var
+        dbClient = pymongo.MongoClient(host, 27017)
+        dbName = '_'.join(['Dom', Period])
+        collection = dbClient[dbName][Var]
+        # 载入初始化需要用的数据
+        dataStartDate = Time_Param[0]
+        dataEndDate = Time_Param[1]
+        flt = {'datetime': {'$gte': dataStartDate, '$lt': dataEndDate}}
+        dbCursor = collection.find(flt).sort('datetime', pymongo.ASCENDING)
+        datas = list(dbCursor)
+        if len(datas) == 0:
+            print 'no data'
+        skdata = pd.DataFrame(datas)
+        skdata.drop(['_id'], axis=1, inplace=True)
+        skdata.set_index('datetime', inplace=True)
+        return skdata
+    else:
+        ABD_Config = {}
+        ABD_Config['DB_Rt_Dir']  = DB_Rt_Dir
+        ABD_Config['Time_Param'] = [Time_Param[0].replace('-', '_'), Time_Param[1].replace('-', '_')]
+        ABD_Config['Period_List'] = [Period]
+        ABD_Config['First_Freq_Col_Param'] = ['Open', 'High', 'Low', 'Close', 'Volume','Oi','AdjFactor']
+        ABD_Config['Other_Freq_Col_Param'] = ['Close']
 
-    ABD = Load_BarData(ABD_Config)
-    ABD.load_bar([Var])
-    period = Period
-    # ABD.clean_data(['Close_M'])
-    if period != 'd':
-        ABD.apply_adj_factor()
+        ABD = Load_BarData(ABD_Config)
+        ABD.load_bar([Var])
+        period = Period
+        # ABD.clean_data(['Close_M'])
+        if period != 'd':
+            ABD.apply_adj_factor()
 
-    skdata = ABD.Panel_Data[Var]
-    skdata = skdata.dropna(axis=0, how='any').copy()
+        skdata = ABD.Panel_Data[Var]
+        skdata = skdata.dropna(axis=0, how='any').copy()
 
-    if 1:  # 标准化处理
-        # 修改索引名称
-        if period == 'd':
-            reindex = [date.replace('_', '-') for date in skdata.index]
-            skdata.index = reindex
+        if 1:  # 标准化处理
+            # 修改索引名称
+            if period == 'd':
+                reindex = [date.replace('_', '-') for date in skdata.index]
+                skdata.index = reindex
 
-        # 修改列名 去掉 '_d' or _M, bar数据列名与 catbardata保持一致
-        recol = {}
-        for col in skdata.columns:
-            ncol = col.replace('_' + period, '').lower()
-            if ncol == 'oi':
-                ncol = 'openInterest'
-            elif ncol == 'adjfactor':
-                ncol = 'adjFactor'
-            recol[col] = ncol
-        skdata.rename(columns=recol, inplace=True)
+            # 修改列名 去掉 '_d' or _M, bar数据列名与 catbardata保持一致
+            recol = {}
+            for col in skdata.columns:
+                ncol = col.replace('_' + period, '').lower()
+                if ncol == 'oi':
+                    ncol = 'openInterest'
+                elif ncol == 'adjfactor':
+                    ncol = 'adjFactor'
+                recol[col] = ncol
+            skdata.rename(columns=recol, inplace=True)
 
-    #----剔除集合竞价bar
-    if 1 and period != 'd':
-        skdata['hms'] = [x[11:] for x in skdata.index]
-        skdata['crthh'] = [x[11:13] for x in skdata.index]
-        skdata['prehh'] = skdata['crthh'].shift(1)
-        skdata = skdata[~((skdata['prehh'] == u'15') & (skdata['high'] - skdata['low'] < 0.01) \
-                         & ((skdata['hms'] == u'21:00:00') | (skdata['hms'] == u'09:00:00') | (skdata['hms'] == u'09:30:00')))]
-        skdata.drop(['hms', 'crthh', 'prehh'], axis=1, inplace=True)
-    return skdata
+        #----剔除集合竞价bar
+        if 1 and period != 'd':
+            skdata['hms'] = [x[11:] for x in skdata.index]
+            skdata['crthh'] = [x[11:13] for x in skdata.index]
+            skdata['prehh'] = skdata['crthh'].shift(1)
+            skdata = skdata[~((skdata['prehh'] == u'15') & (skdata['high'] - skdata['low'] < 0.01) \
+                             & ((skdata['hms'] == u'21:00:00') | (skdata['hms'] == u'09:00:00') | (skdata['hms'] == u'09:30:00')))]
+            skdata.drop(['hms', 'crthh', 'prehh'], axis=1, inplace=True)
+        return skdata
 
 
 def pro_Grst_Factor(  ):
@@ -544,7 +566,7 @@ def pro_Grst_Factor(  ):
         factorvs.to_csv(factordir + factorname  + '.csv')
 
 
-def btest_Grst_Factor(  ):
+def btest_Grst_Factor( datain = 'mongo' ):
     Var_List_all = ['Y', 'FU', 'BB', 'ZN', 'JR', 'BU', 'WR', 'FG', 'JD', 'HC', 'L', 'NI',
                     'PP', 'PB', 'RB', 'TF', 'RM', 'PM', 'A', 'C', 'B', 'AG', 'RU', 'I', 'J',
                     'M', 'AL', 'CF', 'V', 'CS', 'MA', 'OI', 'JM', 'SR', 'TA', 'P'] #
@@ -557,8 +579,10 @@ def btest_Grst_Factor(  ):
     #--------------------backtest------------------------
     TS_Config = {}
     TS_Config['Remark'] = ''
+
     TS_Config['DB_Rt_Dir'] = r'D:\ArcticFox\project\hdf5_database'.replace('\\', '/')
     TS_Config['Rt_Dir'] = os.getcwd()
+    TS_Config['Host'] = 'localhost'
     TS_Config['Init_Capital'] = 10000000
     TS_Config['Time_Param'] = ['2016-06-01', '2017-06-25']
     TS_Config['SlipT'] = 0
@@ -605,16 +629,18 @@ def btest_Grst_Factor(  ):
         'sekop' : {'sal': 0, 'rdl': 1, 'mdl': 0},
         'etkop' : {'sal': 0, 'rdl': 1, 'mdl': 0}
     }
+
+    DB_Rt_Dir = TS_Config['DB_Rt_Dir']
+    Host = TS_Config['Host']
+
     for var in Var_List:
         print 'Test Grst For ', var
-        Time_Param = [TS_Config['Time_Param'][0].replace('-', '_'), TS_Config['Time_Param'][1].replace('-', '_')]
-        DB_Rt_Dir = TS_Config['DB_Rt_Dir']
-        skdata = laod_Dombar(var, Msdpset['ma'], Time_Param, DB_Rt_Dir)
+        skdata = laod_Dombar(var, Msdpset['ma'], Time_Param= TS_Config['Time_Param'], datain=datain, host= Host, DB_Rt_Dir= DB_Rt_Dir)
         Mrst = Grst_Factor(var,  Msdpset['ma'], skdata,  fid= 'ma')
         btest = True
         if 'su' in Msdpset:
             sfaset = {'sal': True, 'rdl': True, 'mdl': True, 'upl': False, 'dwl': False, 'mir': False}
-            stdsk = laod_Dombar(var, Msdpset['su'], Time_Param, DB_Rt_Dir)
+            stdsk = laod_Dombar(var, Msdpset['su'], Time_Param=TS_Config['Time_Param'], datain=datain, host=Host, DB_Rt_Dir= DB_Rt_Dir)
             Arst = Grst_Factor(var, Msdpset['su'], stdsk, fid= 'su')
             Arst.grst_init(faset = sfaset, btest=False, btconfig=TS_Config, subrst= None)
             Mrst.addsgn(Arst.quotes, ['close'], Tn='d', fillna= False)
@@ -664,7 +690,7 @@ class Realdata(object):
             Mongo_Port = 27017
             try:
                 # 设置MongoDB操作的超时时间为0.5秒
-                self.Mongo_Client = MongoClient(Mongo_Host, Mongo_Port, connectTimeoutMS=500)
+                self.Mongo_Client = pymongo.MongoClient(Mongo_Host, Mongo_Port, connectTimeoutMS=500)
                 # 调用server_info查询服务器状态，防止服务器异常并未连接成功
                 self.Mongo_Client.server_info()
             except ConnectionFailure:
