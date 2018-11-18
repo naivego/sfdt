@@ -15,13 +15,19 @@ import pymongo
 from datetime import datetime, timedelta
 
 import matplotlib
+
+# matplotlib.use('Qt4Agg')
 matplotlib.use('TkAgg')
-from matplotlib.finance import candlestick2_ohlc
+
+# from matplotlib.finance import candlestick2_ohlc
+from mpl_finance import candlestick2_ohlc               #若不存在得安装 mpl_finance
+
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
-def plotsdk(stkdf, candk= True, disfactors=None, Symbol='symbol', has2wind = False, Period =''):
-    quotes= stkdf.loc[:]
+
+def plotsdk(stkdf, candk=True, disfactors=None, symbol='symbol', has2wind=False, period=''):
+    quotes = stkdf.loc[:]
     # quotes['mid'] = 0
     xdate = [itime for itime in quotes.index]
     mainwindfs = []
@@ -32,20 +38,22 @@ def plotsdk(stkdf, candk= True, disfactors=None, Symbol='symbol', has2wind = Fal
     if has2wind:
         fig, (ax, ax1) = plt.subplots(2, sharex=True, figsize=(12, 5))
     else:
-        fig, ax = plt.subplots(1, sharex=True, figsize=(12,5))
+        fig, ax = plt.subplots(1, sharex=True, figsize=(12, 5))
 
-    #fig, ax = plt.subplots()
+    # fig, ax = plt.subplots()
     fig.subplots_adjust(bottom=0.05, left=0.03)
+
     def mydate(x, pos):
         try:
             return xdate[int(x)]
         except IndexError:
             return ''
+
     if candk:
         candlestick2_ohlc(ax, quotes['open'], quotes['high'], quotes['low'], quotes['close'], width=0.5, colorup='r', colordown='green')
         ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
 
-    plt.title(Symbol + '_' + Period)
+    plt.title(symbol + '_' + period)
     plt.xlabel("time")
     plt.ylabel("price")
 
@@ -112,11 +120,11 @@ class Load_BarData(object):
         self.Data_Folder_List = []
         self.DF_Data = None
 
-    def load_bar(self, Var_List=None, Dom = 'DomContract'):
+    def load_bar(self, Var_List=None, Dom='DomContract'):
         Start_Time = datetime.now()
         self.Panel_Data = self.DB_App.load_domContract_data_in_time(Var_List, self.Time_Param,
                                                                     self.First_Freq_Col_Param,
-                                                                    self.Other_Freq_Col_Param, self.Period_List, Fctr_Name = Dom )
+                                                                    self.Other_Freq_Col_Param, self.Period_List, Fctr_Name=Dom)
         print 'Loading panel data from database took:', (datetime.now() - Start_Time).total_seconds(), 's.'
         for x in self.Panel_Data.items:
             if self.Panel_Data[x].empty:
@@ -182,6 +190,7 @@ class Load_BarData(object):
         else:
             pass
 
+
 # ----------------------------------------------------------------------
 def laod_DomDatas():
     h5file = r'\data\db\CHN_F\II_O\VarietyFctr\\'.replace('\\',
@@ -212,7 +221,7 @@ def laod_DomDatas():
         print Var_List
         # continue
         ABD = Load_BarData(ABD_Config)
-        ABD.load_bar(Var_List, Dom = 'DomContract')
+        ABD.load_bar(Var_List)
 
         # ABD.clean_data(['Close_M'])
         if ABD_Config['Period_List'][0] != 'd':
@@ -249,7 +258,6 @@ def laod_DomDatas():
                 skdata.rename(columns=recol, inplace=True)
                 if 0:
                     skdata['time'] = skdata.index
-                    plotsdk(skdata, Symbol=var, disfactors=[])
                 print var, 'ok'
             # ----剔除集合竞价bar
             if 1 and period != 'd':
@@ -262,14 +270,16 @@ def laod_DomDatas():
             skdata.to_csv(factordir + var + '_' + period + '.csv')
 
 
-
 # ----------------------------------------------------------------------
 # Dom = 'DomContract' | 'DomContractOi' | 'CrossContract'  | 'CrossContractOi' | 'DomContract2' | 'DomContractOi2' | 'CrossContract2'  | 'CrossContractOi2'
-def load_Dombar( Var, Period, Time_Param, Datain = 'mongo', Host = 'localhost', DB_Rt_Dir='', Dom = 'DomContract', Adj = True):
+def load_Dombar(Var, Period, Time_Param, Datain='mongo', Host='localhost', DB_Rt_Dir='', Dom='DomContract', Adj=True):
     if Datain == 'mongo':
         print 'Load bar from mongodb: ' + Var
         dbClient = pymongo.MongoClient(Host, 27017)
-        dbName = '_'.join(['Dom', Period])
+        if Period=='H':
+            dbName = '_'.join(['Dom', 'M60'])
+        else:
+            dbName = '_'.join(['Dom', Period])
         collection = dbClient[dbName][Var]
         # 载入初始化需要用的数据
         dataStartDate = Time_Param[0]
@@ -285,14 +295,14 @@ def load_Dombar( Var, Period, Time_Param, Datain = 'mongo', Host = 'localhost', 
         return skdata
     else:
         ABD_Config = {}
-        ABD_Config['DB_Rt_Dir']  = DB_Rt_Dir
+        ABD_Config['DB_Rt_Dir'] = DB_Rt_Dir
         ABD_Config['Time_Param'] = [Time_Param[0].replace('-', '_'), Time_Param[1].replace('-', '_')]
         ABD_Config['Period_List'] = [Period]
-        ABD_Config['First_Freq_Col_Param'] = ['Open', 'High', 'Low', 'Close', 'Volume','Oi','AdjFactor']
+        ABD_Config['First_Freq_Col_Param'] = ['Open', 'High', 'Low', 'Close', 'Volume', 'Oi', 'AdjFactor']
         ABD_Config['Other_Freq_Col_Param'] = ['Close']
 
         ABD = Load_BarData(ABD_Config)
-        ABD.load_bar([Var], Dom = Dom)
+        ABD.load_bar([Var], Dom=Dom)
         period = Period
         # ABD.clean_data(['Close_M'])
         if Adj and period != 'd':
@@ -318,15 +328,16 @@ def load_Dombar( Var, Period, Time_Param, Datain = 'mongo', Host = 'localhost', 
                 recol[col] = ncol
             skdata.rename(columns=recol, inplace=True)
 
-        #----剔除集合竞价bar
+        # ----剔除集合竞价bar
         if 1 and period != 'd':
             skdata['hms'] = [x[11:] for x in skdata.index]
             skdata['crthh'] = [x[11:13] for x in skdata.index]
             skdata['prehh'] = skdata['crthh'].shift(1)
             skdata = skdata[~((skdata['prehh'] == u'15') & (skdata['high'] - skdata['low'] < 0.01) \
-                             & ((skdata['hms'] == u'21:00:00') | (skdata['hms'] == u'09:00:00') | (skdata['hms'] == u'09:30:00')))]
+                              & ((skdata['hms'] == u'21:00:00') | (skdata['hms'] == u'09:00:00') | (skdata['hms'] == u'09:30:00')))]
             skdata.drop(['hms', 'crthh', 'prehh'], axis=1, inplace=True)
         return skdata
+
 
 if __name__ == '__main__':
     # laod_DomDatas()

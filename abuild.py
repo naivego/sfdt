@@ -582,12 +582,11 @@ def btest_Grst_Factor( datain = 'mongo' ):
             Arst.colfas()
             Tn = 'd'
             extfas= ['disrst', 'sal', 'brdl', 'trdl'] #['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
-            Mrst.addsgn(Arst.quotes, extfas, Tn=Tn, fillna = False)
+            Mrst.addsgn(Arst.quotes, extfas, Tn=Tn, fillna=False)
             disfas = [colna + '_'+ Tn for colna in extfas] + ['disrst','brdl', 'trdl', 'alp1', 'dlp1','sal' ] #'disrst','ma','mid', ['disrst','sal', 'brdl', 'trdl', 'alp1', 'dlp1' ]
         Mrst.colfas()
         quotesk = Mrst.quotes
-        plotsdk(quotesk, Symbol=var, disfactors = disfas)
-
+        plotsdk(quotesk, symbol=var, disfactors=disfas)
         print datetime.now(),  'ok'
 
 class Realdata(object):
@@ -689,7 +688,7 @@ def showrel_Grst_Factor(  ):
 
 if __name__ == '__main__':
     # laod_DomDatas()
-    btest_Grst_Factor(datain = 'hd')  #'mongo' | 'hd'
+    btest_Grst_Factor(datain = 'mongo')  #'mongo' | 'hd'
     # pro_Grst_Factor()
     # showrel_Grst_Factor()
 
