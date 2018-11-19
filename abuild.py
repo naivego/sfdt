@@ -683,7 +683,7 @@ def showrel_Grst_Factor(  ):
         # plotsdk(quotes, disfactors=['grst', 'qsh', 'qsl', 'zsh', 'zsl', 'rsl','disrst', 'bbl', 'ttl'])  # ,'ATR'  'qswr',
         # plotsdk(quotes, disfactors=['disrst','sk_qsrpt','sk_zs1c', 'sk_zs2c', 'sk_qs1c','sk_qs2c','sk_zs1a', 'sk_zs2a', 'sk_qs1a','sk_qs2a'])  #,'sk_zsrpt','sk_qsrpt'  'sk_zs1c','sk_zs2c', 'qsh', 'qsl',
         print 'plotsdk', var
-        plotsdk(quotes, Symbol=var, disfactors=['disrst', 'bbl', 'ttl', 'alp1', 'alp2','alp3','alp4','alp5','alp6','dlp1', 'dlp2','dlp3','dlp4','dlp5','dlp6'])  #,'zsh', 'zsl', 'rstsph', 'rstspl','bsh', 'bsl'
+        plotsdk(quotes, symbol=var, disfactors=['disrst', 'bbl', 'ttl', 'alp1', 'alp2','alp3','alp4','alp5','alp6','dlp1', 'dlp2','dlp3','dlp4','dlp5','dlp6'])  #,'zsh', 'zsl', 'rstsph', 'rstspl','bsh', 'bsl'
 
 
 if __name__ == '__main__':
