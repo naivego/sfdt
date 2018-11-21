@@ -661,7 +661,8 @@ class TSBacktest(object):
             sk_disrst_d = self.quotes['disrst_d'].values
 
         #-----------------------------------------------------------------
-        stridtm = pd.Timestamp((sk_time[ski])).strftime('%Y-%m-%d %H:%M:%S')
+        # stridtm = pd.Timestamp((sk_time[ski])).strftime('%Y-%m-%d %H:%M:%S')
+        stridtm = sk_time[ski]
         print 'backtest: trade on ', stridtm
         # print stridtm
         idtime = stridtm[:]

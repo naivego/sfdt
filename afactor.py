@@ -2072,6 +2072,7 @@ class Skatline(object):
                     sgntyp = 'rek0'
                     bsdir = tdl.dir
                     sdop =  self.rek0
+                    ordtyp = 'Mkt'
                     sdsp =  tdl.se_resp
                     sdtp = None
                     psn = usrpsn
@@ -3258,87 +3259,6 @@ class Rstsa(object):
                 self.mexi = self.rsti
                 self.mexp = self.rstp
 
-class Simp_Factor(object):
-    def __init__(self, var, skdata, sdt=False):
-        self.Var = var
-        self.quotes = skdata.loc[:]
-        if not sdt:
-            Column0 = self.quotes.columns[0]
-            if '_' not in Column0:
-                Period = 'd'
-            else:
-                Period = Column0.split('_')[1]
-
-            self.quotes = self.quotes.rename(
-                columns={'Open_' + Period: 'open', 'High_' + Period: 'high', 'Low_' + Period: 'low', 'Close_' + Period: 'close',
-                         'Volume_' + Period: 'volume'})
-            if Period == 'd':
-                # self.quotes = self.quotes.rename(columns={'Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close','Volume':'volume'})
-                self.quotes['time'] = skdata.index
-                # for dtm in skdata.index:
-                #     print type(dtm)
-                xdate = [datetime.strptime(i, '%Y_%m_%d') for i in self.quotes['time']]
-                self.quotes['time'] = xdate
-            else:
-                self.quotes['time'] = skdata.index
-                xdate = [datetime.strptime(i, '%Y-%m-%d %H:%M:%S') for i in self.quotes['time']]
-                self.quotes['time'] = xdate
-        else:
-            xdate = [dtm.strftime("%Y-%m-%d") for dtm in skdata.index]
-            self.quotes.index = pd.Index(xdate)
-            self.quotes['time'] = skdata.index
-            xdate = [datetime.strptime(i, '%Y-%m-%d') for i in self.quotes.index]
-            self.quotes['time'] = xdate
-
-        Dat_bar = self.quotes.loc[:]
-        '''
-        Dat_open = self.quotes.loc[:,'open']
-        Dat_high = self.quotes.loc[:, 'high']
-        Dat_low = self.quotes.loc[:, 'low']
-        Dat_close = self.quotes.loc[:, 'close']
-
-        '''
-        Dat_bar['TR1'] = Dat_bar['high'] - Dat_bar['low']
-        Dat_bar['TR2'] = abs(Dat_bar['high'] - Dat_bar['close'].shift(1))
-        Dat_bar['TR3'] = abs(Dat_bar['low'] - Dat_bar['close'].shift(1))
-        TR = Dat_bar.loc[:, ['TR1', 'TR2', 'TR3']].max(axis=1)
-        ATR = TR.rolling(14).mean() / Dat_bar['close'].shift(1)
-        self.quotes['ATR'] = ATR
-
-        Ma  = Dat_bar['close'].rolling(10).mean()
-        Boll_mid = Dat_bar['close'].rolling(20).mean()
-        Std = Dat_bar['close'].rolling(20).std()
-        Boll_upl = Boll_mid + 2 * Std
-        Boll_dwl = Boll_mid - 2 * Std
-        self.quotes['ma'] = Ma
-        self.quotes['mid'] = Boll_mid
-        self.quotes['upl'] = Boll_upl
-        self.quotes['dwl'] = Boll_dwl
-
-    # ----------------------
-    # ----------------------
-    def addsgn(self, sgndat, sgnids, Tn='d'):
-        for isgn in sgnids:
-            if isgn in sgndat.columns:
-                self.extqts.append(isgn)
-        if len(self.extqts) == 0:
-            return
-        toaddf = sgndat.loc[:, self.extqts]
-        newindex = []
-        for dtm in toaddf.index:
-            if ' ' not in dtm:
-                newindex.append(dtm.replace('_', '-') + ' 16:00:00')
-        sindex = self.quotes.index
-        reindex = []
-        for dtm in newindex:
-            redtm = sindex[sindex <= dtm][-1]
-            reindex.append(redtm)
-        toaddf.index = reindex
-        coldic = {isgn: isgn + '_' + Tn for isgn in self.extqts}
-        toaddf.rename(columns=coldic, inplace=True)
-        self.extqts = toaddf.columns.tolist()
-        self.quotes = pd.concat([self.quotes, toaddf], axis=1, join_axes=[self.quotes.index])
-        self.quotes.fillna(method='pad', inplace=True)
 
 
 class Grst_Factor(object):
@@ -3364,13 +3284,12 @@ class Grst_Factor(object):
                 xdate = [datetime.strptime(i, '%Y-%m-%d %H:%M:%S') for i in self.quotes['time']]
                 self.quotes['time'] = xdate
         else:
-            if period=='d':
-                xdate = [datetime.strptime(dtm, "%Y-%m-%d") for dtm in self.quotes.index]
-            else:
-                xdate = [datetime.strptime(dtm, '%Y-%m-%d %H:%M:%S') for dtm in self.quotes.index]
-            # self.quotes.index = pd.Index(xdate)
-            self.quotes['time'] = xdate
-
+            # if period=='d':
+            #     xdate = [datetime.strptime(dtm, "%Y-%m-%d") for dtm in self.quotes.index]
+            # else:
+            #     xdate = [datetime.strptime(dtm, '%Y-%m-%d %H:%M:%S') for dtm in self.quotes.index]
+            # self.quotes['time'] = xdate
+            self.quotes['time'] = self.quotes.index
         Dat_bar  =self.quotes.loc[:]
         '''
         Dat_open = self.quotes.loc[:,'open']
@@ -4294,7 +4213,8 @@ class Grst_Factor(object):
         self.sk_rstspl.append(self.sk_low[skbgi])
         self.sk_rstsph.append(self.sk_high[skbgi])
         self.crtski = skbgi
-        self.crtidtm  = pd.Timestamp((self.sk_time[self.crtski])).strftime('%Y-%m-%d %H:%M:%S')
+        # self.crtidtm  = pd.Timestamp((self.sk_time[self.crtski])).strftime('%Y-%m-%d %H:%M:%S')
+        self.crtidtm  = self.sk_time[self.crtski]
         self.crtidate = self.crtidtm[:10]
 
     def cal_next(self, upidtm = None, upski = None):
@@ -4308,7 +4228,8 @@ class Grst_Factor(object):
         for i in range(nxti, self.sk_close.size):
             if i==1085:
                 print i
-            idtm = pd.Timestamp((self.sk_time[i])).strftime('%Y-%m-%d %H:%M:%S')
+            # idtm = pd.Timestamp((self.sk_time[i])).strftime('%Y-%m-%d %H:%M:%S')
+            idtm = self.sk_time[i]
             if upidtm and upidtm < idtm:
                 break
             self.crtski = i
