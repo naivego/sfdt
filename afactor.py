@@ -1694,7 +1694,7 @@ def getmrline2(socna, bi, bp, mri, mrp, fbi, sk_time, atr, i, upski = None):
 def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, upski = None):
     # tdl斜率的标准范围 : 单位sk的增加百分率 = rklmt * atr     (注：atr 代表当前sk波动百分率)
     rklmt = [0.02, 0.6]
-    tbl = socna.split('_')[0]
+    tbl = socna.split('_')[1]
     tbl = 'bbl' if tbl == 'sa' else 'ttl'
     bi = bi
     bp = bp
@@ -1703,12 +1703,12 @@ def getsaline2(socna, bi, bp, sad2, rkp, fbi, sk_time, atr, i, upski = None):
     trpb = Extrp(bi, bp, 0)
     trpd = Extrp(ei, ep, 0)
     saline = Trpline(trpb, trpd, atr, tbl)
-    if saline.rk * saline.dir >= rklmt[0]:
+    if saline.rk * saline.dir < rklmt[0]:
         ei = sad2.mi + 1
         ep = rkp
         trpd = Extrp(ei, ep, 0)
         saline = Trpline(trpb, trpd, atr, tbl)
-        if saline.rk * saline.dir <= rklmt[0]:  # 斜率太小
+        if not (rklmt[0] < saline.rk * saline.dir < rklmt[1]):  # 斜率太小或太大
             return None
     elif saline.rk * saline.dir > rklmt[1]:  # 斜率太大
         return None
@@ -3233,7 +3233,7 @@ class Rstsa(object):
         self.rstdir = rstdir
         self.trpi = trpi    # 转折起点 极值点
         self.rstbi = rstbi  # 转折确认点
-        self.rsti = None  # 回阻ski
+        self.rsti = None  # 回阻ski # 从极值点到确认点之间实体最大的sk开盘价
         self.rstp = None  # 回阻skp
         self.mexi = None
         self.mexp = None
