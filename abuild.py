@@ -581,9 +581,9 @@ def btest_Grst_Factor( datain = 'mongo' ):
         if 'su' in Msdpset:
             Arst.colfas()
             Tn = 'd'
-            extfas= ['disrst', 'sal', 'brdl', 'trdl'] #['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
+            extfas= ['disrst', 'sal', ] #['disrst', 'sal', 'brdl', 'trdl', 'bmdl', 'tmdl']
             Mrst.addsgn(Arst.quotes, extfas, Tn=Tn, fillna=False)
-            disfas = [colna + '_'+ Tn for colna in extfas] + ['disrst','brdl', 'trdl', 'alp1', 'dlp1','sal' ] #'disrst','ma','mid', ['disrst','sal', 'brdl', 'trdl', 'alp1', 'dlp1' ]
+            disfas = [colna + '_'+ Tn for colna in extfas]  + ['disrst','sal' ] # + ['disrst','brdl', 'trdl', 'alp1', 'dlp1','sal' ] #'disrst','ma','mid', ['disrst','sal', 'brdl', 'trdl', 'alp1', 'dlp1' ]
         Mrst.colfas()
         quotesk = Mrst.quotes
         plotsdk(quotesk, symbol=var, disfactors=disfas)

@@ -266,7 +266,7 @@ class TSBacktest(object):
         self.Init_Capital = TS_Config['Init_Capital']
         self.SlipT = TS_Config['SlipT']
         self.Free_Money = self.Init_Capital
-        self.Networth = 1
+        self.Networth = self.Init_Capital
         self.Record_Frame = pd.DataFrame([[Init_Capital, 0, Init_Capital, 0, 0]], index=['Init'],
                                          columns=['Free', 'Margin', 'Networth', 'Max_Holding_Ratio','Net_Holding_Ratio'])
         self.Transaction_Rate = pd.Series([0.0] * len(self.Variety_List), index=self.Variety_List)
